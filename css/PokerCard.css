@@ -1,16 +1,19 @@
 .card {
-  background-image: url("cardback.gif");
-  border-color: #808080 #000000 #000000 #808080;
+  background-color: #E6D093;
+  border-color: rgba(123, 86, 21, .4);
+  border-radius: 10px;
   border-width: 1px;
   border-style: solid;
-  font-size: 20pt;
+  font-size: 40px;
   position: absolute;
-  width:  3.75em;
-  height: 5.00em;
+  width:  160px;
+  height: 220px;
+  box-shadow: 0px 3px 10px #000000
 }
 
 .front {
-  background-color: #ffffff;
+  border-radius: 10px;
+  background-color: #E6D093;
   color: #000000;
   position: absolute;
   width: 100%;
@@ -37,23 +40,12 @@
   transform: rotate(180deg);
 }
 
-.ace {
-  font-size: 300%;
-  position: absolute;
-  left: 0.325em;
-  top:  0.250em;
-}
 
-.face {
-  border: 1px solid #000000;
-  position: absolute;
-  left: 0.50em;
-  top:  0.45em;
-  width:  2.6em;
-  height: 4.0em;
-}
+
+
 .card_content{
   position:relative;
+  height: 100%;
 }
 
 .suitdiamonds div[class*='spot']:after {
@@ -61,10 +53,33 @@
   color: #ff0000;
   display: block;
 }
+.face {
+  height: 100%;
+  background-size: contain;
+}
+.suitdiamonds .Jack{
+  background-image:  url(image/poker/DJ@2x.png);
+}
+.suitdiamonds .Queen{
+  background-image:  url(image/poker/DQ@2x.png);
+}
+.suitdiamonds .King{
+  background-image:  url(image/poker/DK@2x.png);
+}
+
 .suithearts div[class*='spot']:after {
   content: "\2665";
   color: #ff0000;
   display: block;
+}
+.suithearts .Jack{
+  background-image:  url(image/poker/HJ@2x.png);
+}
+.suithearts .Queen{
+  background-image:  url(image/poker/HQ@2x.png);
+}
+.suithearts .King{
+  background-image:  url(image/poker/HK@2x.png);
 }
 
 .suitclubs div[class*='spot']:after {
@@ -72,6 +87,16 @@
   color: #000;
   display: block;
 }
+.suitclubs .Jack{
+  background-image:  url(image/poker/CJ@2x.png);
+}
+.suitclubs .Queen{
+  background-image:  url(image/poker/CQ@2x.png);
+}
+.suitclubs .King{
+  background-image:  url(image/poker/CK@2x.png);
+}
+
 
 .suitspades div[class*='spot']:after {
   content: "\2660";
@@ -79,6 +104,22 @@
   display: block;
 }
 
+.suitspades .Jack{
+  background-image:  url(image/poker/SJ@2x.png);
+}
+.suitspades .Queen{
+  background-image:  url(image/poker/SQ@2x.png);
+}
+.suitspades .King{
+  background-image:  url(image/poker/SK@2x.png);
+}
+
+.spotAce {
+  font-size: 300%;
+  position: absolute;
+  left: 0.325em;
+  top:  0.250em;
+}
 .spotA1 { position: absolute; left: 0.60em; top: 0.5em; }
 .spotA2 { position: absolute; left: 0.60em; top: 1.5em; }
 .spotA3 { position: absolute; left: 0.60em; top: 2.0em; }
