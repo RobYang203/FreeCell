@@ -1,5 +1,115 @@
 import React from "react"
-export default class Poker extends React.Component{
+export default class Board extends React.Component{
+	constructor(props){
+		super(props);
+		this.state = {poker:null}; 
+		this.getPokerNumber = this.getPokerNumber.bind(this);
+		this.getPokerSuit = this.getPokerSuit.bind(this);
+	}
+	render(){
+		return(
+			<SetPokersArea poker={this.state.poker}/>
+
+			);
+	}
+	componentDidMount(){
+		for(let i =0; i < 8 ; i++){
+			const tmp = i+1;
+			const number = this.getPokerNumber(tmp);
+			const suit = this.getPokerSuit(tmp)
+			const poker = <Poker number={number} suit={suit} />
+			const _that = this;
+			setTimeout(function(){
+				_that.setState({
+					poker:poker
+				});
+			},tmp * 500);
+			
+		}
+	}
+	getPokerNumber(i){
+		const index = i%13;
+		let ret = "";
+		switch(index){
+			case 1:
+				ret = "A";
+				break;
+			case 11:
+				ret = "J";
+				break;
+			case 12:
+				ret = "Q";
+				break;
+			case 13:
+				ret = "K";
+				break;
+			default:
+				ret = index.toString();
+				break;	
+		}
+		return ret;
+	}
+	getPokerSuit(i){
+		const index = parseInt(i/13);
+		let ret = "";
+		switch(index){
+			case 0:
+				ret = "spade";
+				break;
+			case 1:
+				ret = "heart";
+				break;
+			case 2:
+				ret = "diamond";
+				break;
+			case 3:
+				ret = "club";
+				break;
+		}
+		return ret;
+	}
+}
+
+
+
+
+class SetPokersArea extends React.Component{
+	constructor(props){
+		super(props);
+		this.pokerList = [];
+
+	}
+	componentWillUpdate(nextProps){
+		const index = this.pokerList.length;
+		const newPoker = <PokerHolder poker={nextProps.poker} index={index}/>;
+		this.pokerList.push(newPoker);
+	}
+	render(){
+		return(
+			<div className="setPokersArea">
+				{this.pokerList}
+			</div>
+			
+
+			);
+	}
+}
+
+function PokerHolder(props){
+	const {poker,index} = props;
+	const style={
+		top: index * 45
+	};
+	return(
+		<div className="pokerHolder" style={style}>
+			{poker}
+		</div>
+		);
+}
+
+
+
+class Poker extends React.Component{
 	constructor(props){
 		super(props);
 		this.getSuitClass = this.getSuitClass.bind(this);
@@ -26,7 +136,7 @@ export default class Poker extends React.Component{
 		const {number,suit} = this.props;
 		const suitClass = this.getSuitClass(suit);
 		return(
-			<div>
+			<div className="pokerCard">
 				<div className={suitClass}>
 				  <div className="front">
 				    <div className="spotTop">{number}</div>
@@ -61,7 +171,7 @@ function PokerContent(props){
 
 			<div className="card_content">
 				{contentParam.map((item)=>{
-					return <div class={item}></div>;
+					return <div className={item}></div>;
 				})}
 			</div>
 			);

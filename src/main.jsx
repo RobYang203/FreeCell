@@ -1,4 +1,4 @@
 import ReactDOM from 'react-dom'
-import Poker from 'Poker.jsx'
+import Board from 'Poker.jsx'
 
-ReactDOM.render( <Poker number={"Q"} suit="spade" /> , document.getElementById('root'));
+ReactDOM.render( <Board /> , document.getElementById('root'));

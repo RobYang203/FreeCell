@@ -1,3 +1,17 @@
+.setPokersArea{
+  display: inline-block;
+  width:  200px;
+  position: relative;
+}
+.pokerHolder{
+  position:absolute;
+}
+.pokerCard{
+  position: relative;
+  display: inline-block;
+  width:  162px;
+  height: 222px;
+}
 .card {
   background-color: #E6D093;
   border-color: rgba(123, 86, 21, .4);
