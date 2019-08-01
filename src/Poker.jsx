@@ -2,17 +2,31 @@ import React from "react"
 export default class Board extends React.Component{
 	constructor(props){
 		super(props);
-		this.state = {poker:null}; 
+
+		this.state = {pokers:[null,null,null,null,null,null,null,null]}; 		
 		this.getPokerNumber = this.getPokerNumber.bind(this);
 		this.getPokerSuit = this.getPokerSuit.bind(this);
+		this.createPokerList = this.createPokerList.bind(this);
+		this.createPokerCard = this.createPokerCard.bind(this);
+		this.getRandom = this.getRandom.bind(this);
+		this.shufflePoker = this.shufflePoker.bind(this);
+		this.onLicensing = this.onLicensing.bind(this);
+		this.sfPokerList = this.shufflePoker();
+		this.createSetPokerAreaList = this.createSetPokerAreaList.bind(this);
+		
+		console.log(this.sfPokerList);
 	}
 	render(){
+		const setPokerAreaList = this.createSetPokerAreaList();
 		return(
-			<SetPokersArea poker={this.state.poker}/>
-
+			<div>
+				{setPokerAreaList}
+			</div>
 			);
 	}
 	componentDidMount(){
+		this.onLicensing();
+		/*
 		for(let i =0; i < 8 ; i++){
 			const tmp = i+1;
 			const number = this.getPokerNumber(tmp);
@@ -25,8 +39,18 @@ export default class Board extends React.Component{
 				});
 			},tmp * 500);
 			
-		}
+		}*/
 	}
+
+	//建立撲克牌實體
+	createPokerCard(cardNumber){
+		const number = this.getPokerNumber(cardNumber);
+		const suit = this.getPokerSuit(cardNumber)
+		const poker = <Poker number={number} suit={suit} />
+		return poker;
+	}
+
+	//取得目前數字
 	getPokerNumber(i){
 		const index = i%13;
 		let ret = "";
@@ -40,7 +64,7 @@ export default class Board extends React.Component{
 			case 12:
 				ret = "Q";
 				break;
-			case 13:
+			case 0:
 				ret = "K";
 				break;
 			default:
@@ -49,6 +73,8 @@ export default class Board extends React.Component{
 		}
 		return ret;
 	}
+
+	//取得目前撲克花色
 	getPokerSuit(i){
 		const index = parseInt(i/13);
 		let ret = "";
@@ -68,6 +94,56 @@ export default class Board extends React.Component{
 		}
 		return ret;
 	}
+
+	//建立放置撲克牌區域
+	createSetPokerAreaList(){
+		const ret = []; 
+		for(let i =0; i < 8 ; i++){
+			const tmp = <SetPokersArea areaIndex={i} poker={this.state.pokers[i]} onLicensing={this.onLicensing}/>;		
+			ret.push(tmp);	
+		}
+		return ret;
+	}
+
+	//建立撲克牌陣列 1 - 52
+	createPokerList(){
+		const ret = [];
+		for(let i = 0 ; i < 52 ; i++){
+			ret.push(i+1);
+		}
+		return ret;
+	}
+
+
+
+	//洗牌
+	shufflePoker(){
+		const pokerList = this.createPokerList();
+		const ret = [];
+		do{
+			const max = pokerList.length-1;
+			const i = this.getRandom(max);
+			ret.push(pokerList[i]);
+			pokerList.splice(i,1);
+		}while(pokerList.length > 1)
+		return ret;
+	}
+
+	getRandom(max){
+    	return Math.floor(Math.random()*max)+1;
+	}
+	// 發牌回應 ，對每區每次發一張，發到牌沒有
+	onLicensing(i){
+		const isDone = this.sfPokerList.length === 0;
+		if(isDone)
+			return;
+		const isZeroing = i === undefined || i === 7;
+		const newAreaIndex = isZeroing ? 0 : i +1 ;
+		const {pokers} = this.state;
+		pokers[newAreaIndex] = this.createPokerCard(this.sfPokerList[0]);
+		this.setState({pokers:pokers});
+		this.sfPokerList.splice(0,1);
+	}
 }
 
 
@@ -80,9 +156,13 @@ class SetPokersArea extends React.Component{
 
 	}
 	componentWillUpdate(nextProps){
+		const isAdded =  nextProps.poker === null || nextProps.poker === this.props.poker ;
+		if(isAdded)
+			return ;
 		const index = this.pokerList.length;
 		const newPoker = <PokerHolder poker={nextProps.poker} index={index}/>;
 		this.pokerList.push(newPoker);
+		this.props.onLicensing(nextProps.areaIndex);
 	}
 	render(){
 		return(
