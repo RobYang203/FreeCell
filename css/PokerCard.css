@@ -1,3 +1,14 @@
+
+.dragging {
+    opacity: .25;   
+    border-radius:10px;
+    border:none;
+}
+.hover {
+    background-color: rgba(0,191,165,.04);
+}
+
+
 .setPokersArea{
   display: inline-block;
   width:  200px;
@@ -5,12 +16,17 @@
 }
 .pokerHolder{
   position:absolute;
+  background-color: rgba(0,191,165,.04);
+  user-select: none;
+
 }
 .pokerCard{
   position: relative;
   display: inline-block;
   width:  162px;
   height: 222px;
+  border-radius: 20px;
+  padding: 5px
 }
 .card {
   background-color: #E6D093;
@@ -24,7 +40,9 @@
   height: 220px;
   box-shadow: 0px 3px 10px #000000
 }
-
+.dragging .card {
+   
+}
 .front {
   border-radius: 10px;
   background-color: #E6D093;

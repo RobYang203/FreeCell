@@ -3,17 +3,15 @@ export default class Board extends React.Component{
 	constructor(props){
 		super(props);
 
-		this.state = {pokers:[null,null,null,null,null,null,null,null]}; 		
-		this.getPokerNumber = this.getPokerNumber.bind(this);
-		this.getPokerSuit = this.getPokerSuit.bind(this);
+		this.state = {pokers:[[],[],[],[],[],[],[],[],[]]}; 		
+		this.sfPokerList = this.shufflePoker();
+
 		this.createPokerList = this.createPokerList.bind(this);
-		this.createPokerCard = this.createPokerCard.bind(this);
 		this.getRandom = this.getRandom.bind(this);
 		this.shufflePoker = this.shufflePoker.bind(this);
 		this.onLicensing = this.onLicensing.bind(this);
-		this.sfPokerList = this.shufflePoker();
 		this.createSetPokerAreaList = this.createSetPokerAreaList.bind(this);
-		
+			
 		console.log(this.sfPokerList);
 	}
 	render(){
@@ -21,6 +19,7 @@ export default class Board extends React.Component{
 		return(
 			<div>
 				{setPokerAreaList}
+				<div id="test">123456</div>
 			</div>
 			);
 	}
@@ -42,11 +41,206 @@ export default class Board extends React.Component{
 		}*/
 	}
 
+
+
+	//建立放置撲克牌區域
+	createSetPokerAreaList(){
+		const ret = []; 
+		for(let i =0; i < 8 ; i++){
+			const tmp = <SetPokersArea areaIndex={i} pkNumberList={this.state.pokers[i]}
+						/>;		
+			ret.push(tmp);	
+		}
+		return ret;
+	}
+
+	//建立撲克牌陣列 1 - 52
+	createPokerList(){
+		const ret = [];
+		for(let i = 0 ; i < 52 ; i++){
+			ret.push(i+1);
+		}
+		return ret;
+	}
+
+
+
+	//洗牌
+	shufflePoker(){
+		const pokerList = this.createPokerList();
+		const ret = [];
+		do{
+			const max = pokerList.length-1;
+			const i = this.getRandom(max);
+			ret.push(pokerList[i]);
+			pokerList.splice(i,1);
+		}while(pokerList.length > 1);
+		ret.push(pokerList[0]);
+		return ret;
+	}
+
+	getRandom(max){
+    	return Math.floor(Math.random()*max)+1;
+	}
+	// 發牌回應 ，對每區每次發一張，發到牌沒有
+	onLicensing(){
+		const pkNumberList = this.state.pokers;
+		this.sfPokerList.map((pkNumber,i)=>{
+				const pkIndex = i % 8;
+				pkNumberList[pkIndex].push(pkNumber);
+		})
+		console.log(pkNumberList);
+		this.setState({pokers:pkNumberList});
+		
+	}
+
+
+
+
+}
+
+
+
+
+class SetPokersArea extends React.Component{
+	constructor(props){
+		super(props);
+		//areaState normal 、 dragging 、refresh
+		this.state = {areaState:"normal"}
+
+		this.pokerList = [];
+		/*
+			const pkInfo={
+				pkNumber:pkNumber,
+				number:0,
+				state:"refresh",
+				suit:null,
+				color:null,
+				interlockIndex:null
+			};
+		*/
+		this.pkInfoList={};
+
+		this.onDragEnter = this.onDragEnter.bind(this);
+		this.onDragOver = this.onDragOver.bind(this);
+		this.onDragLeave = this.onDragLeave.bind(this);
+
+		this.onPokerDragStart = this.onPokerDragStart.bind(this);
+		this.onPokerDrag = this.onPokerDrag.bind(this);
+		this.onPokerDragEnd = this.onPokerDragEnd.bind(this);
+
+		this.getPokerNumber = this.getPokerNumber.bind(this);
+		this.getPokerSuit = this.getPokerSuit.bind(this);
+		this.createPokerCard = this.createPokerCard.bind(this);
+		this.setPkInfo  =this.setPkInfo.bind(this);
+	}
+	componentWillUpdate(nextProps, nextState){
+		if(nextState.areaState === "normal")
+			this.pkInfoList = this.setPkInfo(nextProps.pkNumberList);
+		this.pokerList = [];
+		this.pkInfoList.map((pkInfo,i)=>{		
+			const tmp = this.createPokerCard( pkInfo, i);
+			if(tmp !== null)
+				this.pokerList.push(tmp);
+		});
+		//console.log(this.pokerList);
+	}
+
+	render(){
+		return(
+			<div className="setPokersArea" 
+				onDragEnter={(e)=>{this.onDragEnter(e)}}
+				onDragOver={(e)=>{this.onDragOver(e)}}
+				onDragLeave={(e)=>{this.onDragLeave(e)}}
+				>
+				{this.pokerList}				
+			</div>
+			
+			);
+	}
+
+	onDragEnter(e){
+		console.log("onDragEnter " );
+		console.log(e);
+		if(this.props.onDragEnter === null || this.props.onDragEnter === undefined)
+			return;
+		this.props.onDragEnter(e);
+
+	}
+	onDragOver(e){
+		console.log("onDragOver");
+		console.log(e);
+		if(this.props.onDragOver === null || this.props.onDragOver === undefined)
+			return;
+		this.props.onDragOver(e);
+
+	}
+	onDragLeave(e){
+		console.log("onDragLeave");
+		console.log(e);
+		if(this.props.onDragLeave === null || this.props.onDragLeave === undefined)
+			return;
+		this.props.onDragLeave(e);
+	}
+
+	onPokerDragStart(e, index){
+		console.log("onDragStart"+ index);
+		console.log(e);
+		this.pkInfoList[index].state = "dragging";
+		this.setState({areaState:"dragging"});
+		
+	}
+	onPokerDragEnd(e, index){
+		console.log("onDragEnd"+ index);
+		console.log(e);
+		this.pkInfoList[index].state = "refresh";
+		this.setState({areaState:"normal"});
+	}
+	onPokerDrag(e, index){
+
+		this.pkInfoList[index].state = "dragging";
+
+	}
+
 	//建立撲克牌實體
-	createPokerCard(cardNumber){
-		const number = this.getPokerNumber(cardNumber);
-		const suit = this.getPokerSuit(cardNumber)
-		const poker = <Poker number={number} suit={suit} />
+	createPokerCard(pkInfo ,index){
+		const { number, suit, interlockIndex, state} = pkInfo;
+		if(state === "movingLock")
+			return null;
+		const isDraggable = interlockIndex !== null;
+		const array = [<Poker number={number} suit={suit} />];
+		if(state === "dragging" && interlockIndex !== -1){
+			let iLPKInfo = this.pkInfoList[interlockIndex];
+			let i = 1;
+			do{
+				iLPKInfo.state ="movingLock";
+				const tmp = <PokerHolder index={i}
+								Draggable={false}
+								state={null}
+								spacing={65}
+								onPokerDragStart={null}
+								onPokerDrag={null}
+								onPokerDragEnd={null}
+								>
+								<Poker number={iLPKInfo.number} suit={iLPKInfo.suit} />
+							</PokerHolder>	
+				array.push(tmp);
+				const nextInterlockIndex = iLPKInfo.interlockIndex;
+				iLPKInfo = this.pkInfoList[nextInterlockIndex];
+				i++;
+			}while(iLPKInfo !== null && iLPKInfo !== undefined);						
+		}
+		const poker = 
+			<PokerHolder index={index}
+				spacing={45}
+				Draggable={isDraggable}
+				state={state}
+				onPokerDragStart={this.onPokerDragStart}
+				onPokerDrag={this.onPokerDrag}
+				onPokerDragEnd={this.onPokerDragEnd}
+				>
+				{array}
+			</PokerHolder>			
 		return poker;
 	}
 
@@ -76,113 +270,81 @@ export default class Board extends React.Component{
 
 	//取得目前撲克花色
 	getPokerSuit(i){
-		const index = parseInt(i/13);
+		const index = Math.ceil(i/13);
 		let ret = "";
 		switch(index){
-			case 0:
+			case 1:
 				ret = "spade";
 				break;
-			case 1:
+			case 2:
 				ret = "heart";
 				break;
-			case 2:
+			case 3:
 				ret = "diamond";
 				break;
-			case 3:
+			case 4:
 				ret = "club";
 				break;
 		}
 		return ret;
 	}
 
-	//建立放置撲克牌區域
-	createSetPokerAreaList(){
-		const ret = []; 
-		for(let i =0; i < 8 ; i++){
-			const tmp = <SetPokersArea areaIndex={i} poker={this.state.pokers[i]} onLicensing={this.onLicensing}/>;		
-			ret.push(tmp);	
+	setPkInfo(numberList){
+		const ret = [];
+		const len = numberList.length;
+		for(let i=len; i >0; i--){
+			const index = i-1;
+			const pkNumber = numberList[index];
+			const pkInfo={
+				pkNumber:pkNumber,
+				number:0,
+				state:"refresh",
+				suit:null,
+				color:null,
+				interlockIndex:null
+			};
+			ret[index] = pkInfo;
+
+			pkInfo["number"] = this.getPokerNumber(pkNumber);
+
+			const suit = this.getPokerSuit(pkNumber);
+			const isBlack = suit === "club" || suit === "spade";
+			pkInfo["color"] = isBlack?"b":"r";
+			pkInfo["suit"] = suit;
+			if(i === len){
+				pkInfo["interlockIndex"] = -1;
+				continue;
+			}
+			const nextPK = ret[index+1];
+			//
+			pkInfo["interlockIndex"] = index+1;	
+			//	
+			const isSameColor = nextPK["color"] === pkInfo["color"];
+			if(isSameColor)
+				continue;
+
+			const isNextNumber =  nextPK["number"] -1 === pkInfo["number"];
+			if(!isNextNumber)
+				continue;
+			pkInfo["interlockIndex"] = index+1;			
 		}
 		return ret;
-	}
-
-	//建立撲克牌陣列 1 - 52
-	createPokerList(){
-		const ret = [];
-		for(let i = 0 ; i < 52 ; i++){
-			ret.push(i+1);
-		}
-		return ret;
-	}
-
-
-
-	//洗牌
-	shufflePoker(){
-		const pokerList = this.createPokerList();
-		const ret = [];
-		do{
-			const max = pokerList.length-1;
-			const i = this.getRandom(max);
-			ret.push(pokerList[i]);
-			pokerList.splice(i,1);
-		}while(pokerList.length > 1)
-		return ret;
-	}
-
-	getRandom(max){
-    	return Math.floor(Math.random()*max)+1;
-	}
-	// 發牌回應 ，對每區每次發一張，發到牌沒有
-	onLicensing(i){
-		const isDone = this.sfPokerList.length === 0;
-		if(isDone)
-			return;
-		const isZeroing = i === undefined || i === 7;
-		const newAreaIndex = isZeroing ? 0 : i +1 ;
-		const {pokers} = this.state;
-		pokers[newAreaIndex] = this.createPokerCard(this.sfPokerList[0]);
-		this.setState({pokers:pokers});
-		this.sfPokerList.splice(0,1);
-	}
-}
-
-
-
-
-class SetPokersArea extends React.Component{
-	constructor(props){
-		super(props);
-		this.pokerList = [];
-
-	}
-	componentWillUpdate(nextProps){
-		const isAdded =  nextProps.poker === null || nextProps.poker === this.props.poker ;
-		if(isAdded)
-			return ;
-		const index = this.pokerList.length;
-		const newPoker = <PokerHolder poker={nextProps.poker} index={index}/>;
-		this.pokerList.push(newPoker);
-		this.props.onLicensing(nextProps.areaIndex);
-	}
-	render(){
-		return(
-			<div className="setPokersArea">
-				{this.pokerList}
-			</div>
-			
-
-			);
 	}
 }
 
 function PokerHolder(props){
-	const {poker,index} = props;
+	const { children, index, spacing, Draggable,state} = props;
 	const style={
-		top: index * 45
+		top: index * spacing
 	};
+	const pkClassName = `pokerHolder ${state==="dragging"?"dragging":""}`						
 	return(
-		<div className="pokerHolder" style={style}>
-			{poker}
+		<div className={pkClassName} draggable={true} style={style}
+			onDragStart={(e)=>{props.onPokerDragStart(e , index)}}
+			onDrag={(e)=>{props.onPokerDrag(e, index)}}
+			onDragEnd={(e)=>{props.onPokerDragEnd(e, index)}}
+			>
+			{children}
 		</div>
 		);
 }
@@ -193,6 +355,7 @@ class Poker extends React.Component{
 	constructor(props){
 		super(props);
 		this.getSuitClass = this.getSuitClass.bind(this);
+
 	}
 	getSuitClass(suit){
 		let ret = "card ";
@@ -212,11 +375,13 @@ class Poker extends React.Component{
 		}
 		return ret;
 	}
+
+
 	render(){
 		const {number,suit} = this.props;
 		const suitClass = this.getSuitClass(suit);
 		return(
-			<div className="pokerCard">
+			<div className="pokerCard" >
 				<div className={suitClass}>
 				  <div className="front">
 				    <div className="spotTop">{number}</div>
