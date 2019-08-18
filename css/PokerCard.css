@@ -1,6 +1,6 @@
 
 .dragging {
-    opacity: .25;   
+    opacity: 0.1;   
     border-radius:10px;
     border:none;
 }
@@ -8,11 +8,14 @@
     background-color: rgba(0,191,165,.04);
 }
 
-
+.showDragImage{
+  
+}
 .setPokersArea{
   display: inline-block;
   width:  200px;
   position: relative;
+  vertical-align: top;
 }
 .pokerHolder{
   position:absolute;
