@@ -9,14 +9,17 @@ export default class Board extends React.Component{
 		}; 
 	
 		this.sfPokerList = this.shufflePoker();
-		this.movingList =[];
-
+		this.transferData = {
+			movingList:[],
+			state:""
+		};
 		this.createPokerList = this.createPokerList.bind(this);
 		this.getRandom = this.getRandom.bind(this);
 		this.shufflePoker = this.shufflePoker.bind(this);
 		this.onLicensing = this.onLicensing.bind(this);
 		this.createSetPokerAreaList = this.createSetPokerAreaList.bind(this);
 		this.setMovingDragImage = this.setMovingDragImage.bind(this);
+		this.transferCenter = this.transferCenter.bind(this);
 		console.log(this.sfPokerList);
 	}
 	render(){
@@ -54,7 +57,7 @@ export default class Board extends React.Component{
 		const ret = []; 
 		for(let i =0; i < 8 ; i++){
 			const tmp = <SetPokersArea areaIndex={i} pkNumberList={this.state.pokers[i]}
-							setMovingDragImage={this.setMovingDragImage}
+							transferCenter={this.transferCenter}
 						/>;		
 			ret.push(tmp);	
 		}
@@ -101,17 +104,29 @@ export default class Board extends React.Component{
 		
 	}
 	setMovingDragImage(movingList){
-		this.movingList = movingList;
-		const list = [];
-		movingList.map((pkInfo)=>{
-			list.push(pkInfo.pkNumber);
-		});
 
 		this.setState({
-			showDragPkNumberList:list
+			showDragPkNumberList:movingList
 		});
 	}
+	transferCenter(requestCode , values){
+		switch(requestCode){
+			case "waitTrans":
+				this.transferData["movingList"] = values;
+				this.transferData["state"] = requestCode;
+				this.setMovingDragImage(values);
+				break;
+			case "reject":
+			case "accept":
+				this.transferData["state"] = requestCode;
+				break;
+			case "finish":
+				this.transferData["movingList"] = [];
+				this.transferData["state"] = requestCode;
+				break;
+		}
 
+	}
 
 
 }
@@ -122,7 +137,7 @@ export default class Board extends React.Component{
 class SetPokersArea extends React.Component{
 	constructor(props){
 		super(props);
-		//areaState normal 、 dragging 、refresh
+		//areaState licensing 、normal 、 dragging 、refresh
 		this.state = {areaState:"normal"}
 
 		this.pokerList = [];
@@ -137,8 +152,9 @@ class SetPokersArea extends React.Component{
 			};
 		*/
 		this.pkInfoList={};
-		this.areaStyle= null;
+
 		const isShowArea = this.props.isShowArea;
+		this.areaStyle= null;
 		this.showAreaClass = `setPokersArea ${isShowArea?"showDragImage":""}`;
 
 		this.onDragEnter = this.onDragEnter.bind(this);
@@ -160,14 +176,15 @@ class SetPokersArea extends React.Component{
 		this.pokerList = [];
 		let areaH = 222;
 		this.pkInfoList.map((pkInfo,i)=>{		
-			const tmp = this.createPokerCard( pkInfo, i);
 			areaH += 45;
+			const tmp = this.createPokerCard( pkInfo, i);
 			if(tmp !== null)
 				this.pokerList.push(tmp);
 		});
+		areaH = this.props.isShowArea?areaH*2:areaH;
 		this.areaStyle={
 			height:areaH+"px"
-		}
+		};
 		//console.log(this.pokerList);
 	}
 
@@ -216,20 +233,21 @@ class SetPokersArea extends React.Component{
 		const dragPoker = this.pkInfoList[index];		
 		dragPoker.state = "dragging";
 
-		const moveList = [dragPoker];
+		const moveList = [dragPoker.pkNumber];
 		if(dragPoker.interlockIndex !== -1){
 			let iLPKInfo = this.pkInfoList[dragPoker.interlockIndex];
 			do{
 				iLPKInfo.state ="movingLock";
-				moveList.push(iLPKInfo);
+				moveList.push(iLPKInfo.pkNumber);
+
 				const nextInterlockIndex = iLPKInfo.interlockIndex;
 				iLPKInfo = this.pkInfoList[nextInterlockIndex];
 			}while(iLPKInfo !== null && iLPKInfo !== undefined);						
 		}
 		console.log(moveList);
-		this.props.setMovingDragImage(moveList);
+		this.props.transferCenter("waitTrans",moveList);
 
-		e.dataTransfer.setDragImage(document.querySelector(".setPokersArea.showDragImage"), 0, 0);
+		e.dataTransfer.setDragImage(document.querySelector(".setPokersArea.showDragImage"), 50, 0);
 		this.setState({areaState:"dragging"});
 	}
 	onPokerDragEnd(e, index){
@@ -259,6 +277,9 @@ class SetPokersArea extends React.Component{
 				onPokerDragStart={this.onPokerDragStart}
 				onPokerDrag={this.onPokerDrag}
 				onPokerDragEnd={this.onPokerDragEnd}
+				onPokerDragEnter={this.onPokerDragEnter}
+				onPokerDragOver={this.onPokerDragOver}
+				onPokerDrop={this.onPokerDrop}
 				>
 				<Poker number={number} suit={suit} />
 			</PokerHolder>			
@@ -358,7 +379,7 @@ function PokerHolder(props){
 	const style={
 		top: index * spacing
 	};
-	const pkClassName = `pokerHolder ${state==="dragging"?"dragging":""}`						
+	const pkClassName = `pokerHolder ${state !== "refresh"?"dragging":""}`						
 	return(
 		<div className={pkClassName} draggable={true} style={style}
 			onDragStart={(e)=>{props.onPokerDragStart(e , index)}}
