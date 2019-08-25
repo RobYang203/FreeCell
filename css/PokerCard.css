@@ -1,4 +1,33 @@
 
+.transformContent{
+  transform: scale(0.8,0.8);
+  width: 150%;
+  position: relative;
+  left: -15%;
+  
+}
+.freeCellBGStyle{
+  background: transparent radial-gradient(closest-side at 50% 50%, #561E0F 0%, #1E0A02 100%) 0% 0% no-repeat padding-box;
+  opacity: 1;
+  width: 1920px;
+  height: 1080px;
+}
+.topArea{
+  margin: 33px 0 0 31px;
+}
+.topArea > div{
+  display: inline-block;  
+}
+.temporaryArea{
+  margin-right: 250px;
+}
+.compilationArea{
+
+}
+.bottomArea{
+  margin: 34px 0 0 31px;
+}
+
 .dragging {
     opacity: 0.0;   
     border-radius:10px;
@@ -22,7 +51,7 @@
   position:absolute;
   background-color: rgba(0,191,165,.04);
   user-select: none;
-
+  left:5px;
 }
 .pokerCard{
   position: relative;
@@ -30,7 +59,7 @@
   width:  162px;
   height: 222px;
   border-radius: 20px;
-  padding: 5px
+  padding: 5px;
 }
 .card {
   background-color: #E6D093;
@@ -44,9 +73,17 @@
   height: 220px;
   box-shadow: 0px 3px 10px #000000
 }
-.dragging .card {
-   
+
+.empty{
+  display: inline-block;
+  width:  162px;
+  height: 222px;
+  border-radius: 20px;
+  border:5px dashed #c3c3c3;
+  padding: 5px;
+  left:0px;
 }
+
 .front {
   border-radius: 10px;
   background-color: #E6D093;
@@ -177,9 +214,7 @@
 
 * {margin: 0; padding: 0;}
 
-body {
-  background: #00a651;
-}
+
 
 
  

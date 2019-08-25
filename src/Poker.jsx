@@ -19,18 +19,35 @@ export default class Board extends React.Component{
 		this.getRandom = this.getRandom.bind(this);
 		this.shufflePoker = this.shufflePoker.bind(this);
 		this.onLicensing = this.onLicensing.bind(this);
+
 		this.createSetPokerAreaList = this.createSetPokerAreaList.bind(this);
+		this.createSetCompilationAreaList = this.createSetCompilationAreaList.bind(this);
+		this.createSetTemporaryAreaList = this.createSetTemporaryAreaList.bind(this);
+
 		this.setMovingDragImage = this.setMovingDragImage.bind(this);
 		this.transferCenter = this.transferCenter.bind(this);
 		console.log(this.sfPokerList);
 	}
 	render(){
 		const setPokerAreaList = this.createSetPokerAreaList();
+		const setTemporaryAreaList = this.createSetTemporaryAreaList();
+		const setCompilationAreaList = this.createSetCompilationAreaList();
 		return(
 			<div>
-				{setPokerAreaList}
-				<SetPokersArea areaIndex={-1} poker={this.state.showDragPkNumberList} isShowArea={true}/>
-				<div id="test">123456</div>
+				<div className="topArea">
+					<div className="temporaryArea">
+						{setTemporaryAreaList}
+					</div>
+					<div className="compilationArea">
+						{setCompilationAreaList}
+					</div>
+				</div>
+				<div className="bottomArea">
+					{setPokerAreaList}
+				</div>
+				
+				<SetPokersArea areaIndex={-1} areaType="freeCell" poker={this.state.showDragPkNumberList} isShowArea={true}/>
+
 			</div>
 			);
 	}
@@ -60,6 +77,43 @@ export default class Board extends React.Component{
 		for(let i =0; i < 8 ; i++){
 			const tmp = <SetPokersArea areaIndex={i} poker={this.state.pokers[i]}
 							transferCenter={this.transferCenter}
+							areaType="freeCell"
+						/>;		
+			ret.push(tmp);	
+		}
+		return ret;
+	}
+	//建立暫存區
+	createSetTemporaryAreaList(){
+		const ret = []; 
+		for(let i =11; i <= 14 ; i++){
+			const tmpPoker ={
+				state:null,
+				pkNumberList:[]
+			}
+			const tmp = <SetPokersArea 
+							areaIndex={i} 
+							poker={tmpPoker}
+							transferCenter={this.transferCenter}
+							areaType="temporary"
+						/>;		
+			ret.push(tmp);	
+		}
+		return ret;
+	}
+	//建立歸類區
+	createSetCompilationAreaList(){
+		const ret = []; 
+		for(let i =21; i <= 24 ; i++){
+			const tmpPoker ={
+				state:null,
+				pkNumberList:[]
+			}
+			const tmp = <SetPokersArea 
+							areaIndex={i} 
+							poker={tmpPoker}
+							transferCenter={this.transferCenter}
+							areaType="compilation"
 						/>;		
 			ret.push(tmp);	
 		}
@@ -130,19 +184,19 @@ export default class Board extends React.Component{
 				this.transferData["sourceAreaIndex"]  = areaIndex;
 				this.transferData["moveInfoList"] = values;
 				this.transferData["state"] = requestCode;
-				this.state.pokers[areaIndex].state= "dragging";
+				//this.state.pokers[areaIndex].state= "dragging";
 				this.setMovingDragImage(values);
 				break;
 			case "arrival":
 				this.transferData["targetAreaIndex"]  = areaIndex;
-				return this.transferData["moveInfoList"];
+				return this.transferData;
 				break;
 			case "reject":
 			case "accept":
 				this.transferData["state"] = requestCode;
 				break;
 			case "finish":
-				this.state.pokers[areaIndex].state= null;
+				//this.state.pokers[areaIndex].state= null;
 				return this.transferData;
 				break;
 			case "clear":
@@ -176,11 +230,14 @@ class SetPokersArea extends React.Component{
 				interlockIndex:null
 			};
 		*/
+		this.areaStyle= null;
+		this.areaType =this.props.areaType;
 		this.areaIndex = this.props.areaIndex;
 		this.pkInfoList={};
 		this.pkNumberList=[];
+		
+
 		const isShowArea = this.props.isShowArea;
-		this.areaStyle= null;
 		this.showAreaClass = `setPokersArea ${isShowArea?"showDragImage":""}`;
 
 		this.onPokerDragEnter = this.onPokerDragEnter.bind(this);
@@ -197,11 +254,12 @@ class SetPokersArea extends React.Component{
 		this.getPokerSuit = this.getPokerSuit.bind(this);
 		this.createPokerCard = this.createPokerCard.bind(this);
 		this.setPkInfo  =this.setPkInfo.bind(this);
+		this.getDropResultCode = this.getDropResultCode.bind(this);
 	}
 	componentWillUpdate(nextProps, nextState){
 		if(nextProps.poker === null)
 			return
-		let areaState = nextProps.poker.state === null? nextState.areaState : nextProps.poker.state;
+		let areaState = nextState.areaState;//nextProps.poker.state === null? nextState.areaState : nextProps.poker.state;
 
 		if(areaState === "licensing" || this.props.isShowArea){
 			this.pkNumberList = nextProps.poker.pkNumberList;			
@@ -215,18 +273,21 @@ class SetPokersArea extends React.Component{
 			
 			//areaState = "、normal";
 			this.pokerList = [];
-
-			let areaH = 222;
+			const emptyPoker = this.createEmptyPokerCard();
+			this.pokerList.push(emptyPoker);
+			
 			const pkLen = this.pkInfoList.length;
-
-			this.pkInfoList.map((pkInfo,i)=>{		
-				areaH += 45;
-				const tmp = this.createPokerCard( pkInfo, i,pkLen-1);
+			let areaH = 222;
+			this.pkInfoList.map((pkInfo,i)=>{	
+				if(this.areaType === "freeCell")	
+					areaH += 45;
+				const tmp = this.createPokerCard( pkInfo, i, pkLen-1);
 				if(tmp !== null)
 					this.pokerList.push(tmp);
 			});
 
 			areaH = this.props.isShowArea?areaH*2:areaH;
+
 			this.areaStyle={
 				height:areaH+"px"
 			};
@@ -281,23 +342,29 @@ class SetPokersArea extends React.Component{
 	onPokerDrop(e, index){
 		console.log("onPokerDrop"+ index);
 		console.log(e);
-
-		const targetInfo = this.pkInfoList[index];
-		const sourceInfoList = this.props.transferCenter(this.areaIndex, "arrival");
+		const emptyInfo={
+				pkNumber:"empty",
+				number:0,
+				state:"refresh",
+				suit:"empty",
+				color:"empty",
+				interlockIndex:null
+			};
+		const targetInfo = this.pkInfoList[index] === undefined || this.pkInfoList[index] === null? emptyInfo: this.pkInfoList[index];
+		const transferData = this.props.transferCenter(this.areaIndex, "arrival");
 		
-		const colorPair = targetInfo.color !== sourceInfoList[0].color;
-		const numberPair = this.pkConvertToNumber(targetInfo.number)-1 === this.pkConvertToNumber(sourceInfoList[0].number);
 		
-		let returnCode = "";
-		if(colorPair && numberPair){
-			sourceInfoList.map((pkInfo , i)=>{
+		
+		//const colorPair = targetInfo.color !== sourceInfoList[0].color;
+		//const numberPair = this.pkConvertToNumber(targetInfo.number)-1 === this.pkConvertToNumber(sourceInfoList[0].number);
+		
+		let returnCode = this.getDropResultCode( targetInfo, transferData);
+		if(returnCode === "accept"){
+			transferData.moveInfoList.map((pkInfo , i)=>{
 				this.pkNumberList.push(pkInfo.pkNumber);
 			});
-			returnCode = "accept";
 			this.setState({areaState:"refresh"});
 		}
-		else
-			returnCode ="reject";
 			
 		this.props.transferCenter(this.areaIndex, returnCode);
 
@@ -327,9 +394,11 @@ class SetPokersArea extends React.Component{
 			}while(iLPKInfo !== null && iLPKInfo !== undefined);						
 		}
 		console.log(moveInfoList);
+		this.setState({areaState:"dragging"});
 		this.props.transferCenter(this.areaIndex, "waitTrans",moveInfoList);
-
-		e.dataTransfer.setDragImage(document.querySelector(".setPokersArea.showDragImage"), 0, 0);		
+		const x = e.nativeEvent.layerX;
+		const y = e.nativeEvent.layerY;
+		e.dataTransfer.setDragImage(document.querySelector(".setPokersArea.showDragImage"), x, y);		
 	}
 	onPokerDragEnd(e, index){
 		console.log("onDragEnd"+ index);
@@ -339,7 +408,7 @@ class SetPokersArea extends React.Component{
 
 		if(transferData.state === "accept"){
 			const removeLen = transferData.moveInfoList.length;
-			const removeIndex = this.pkNumberList.length - removeLen -1 ;
+			const removeIndex = this.pkNumberList.length - removeLen ;
 
 			this.pkNumberList.splice(removeIndex,removeLen);
 
@@ -358,7 +427,8 @@ class SetPokersArea extends React.Component{
 		const { number, suit, interlockIndex, state} = pkInfo;
 
 
-		const isDraggable = interlockIndex !== null;
+		const isDraggable = interlockIndex !== null ;//|| this.areaType !== "compilation";
+		const spacing = this.areaType === "freeCell"? 45 : 0;
 
 		let onPokerDragEnter = null;
 		let onPokerDragOver = null;
@@ -374,7 +444,7 @@ class SetPokersArea extends React.Component{
 		}
 		const poker = 
 			<PokerHolder index={index}
-				spacing={45}
+				spacing={spacing}
 				Draggable={isDraggable}
 				state={state}
 				onPokerDragStart={this.onPokerDragStart}
@@ -390,7 +460,25 @@ class SetPokersArea extends React.Component{
 			</PokerHolder>			
 		return poker;
 	}
+	createEmptyPokerCard(){
+		const poker = 
+			<PokerHolder index={99999999}
+				spacing={0}
+				Draggable={false}
+				state={"empty"}
+				onPokerDragStart={null}
+				onPokerDrag={null}
+				onPokerDragEnd={null}
 
+				onPokerDragEnter={this.onPokerDragEnter}
+				onPokerDragOver={this.onPokerDragOver}
+				onPokerDragLeave={this.onPokerDragLeave}
+				onPokerDrop={this.onPokerDrop}
+				>
+			</PokerHolder>			
+		return poker;
+
+	}
 	//取得目前數字
 	getPokerNumber(i){
 		const index = i%13;
@@ -484,37 +572,85 @@ class SetPokersArea extends React.Component{
 				continue;
 			}
 			const nextPK = ret[index+1];
-			//
-			pkInfo["interlockIndex"] = index+1;	
-			//	
+			if(nextPK["interlockIndex"] !== -1 && nextPK["interlockIndex"] === null){
+				continue;
+			}
+			if(nextPK["interlockIndex"] === null){
+				continue;
+			}
+
 			const isSameColor = nextPK["color"] === pkInfo["color"];
 			if(isSameColor)
 				continue;
 
-			const isNextNumber =  nextPK["number"] -1 === pkInfo["number"];
+			const isNextNumber = this.pkConvertToNumber(nextPK["number"]) === this.pkConvertToNumber(pkInfo["number"]) -1;
 			if(!isNextNumber)
 				continue;
 			pkInfo["interlockIndex"] = index+1;			
 		}
 		return ret;
 	}
-}
 
+	// 取得拖曳的結果
+	getDropResultCode(tarInfo , transferData){
+		const cardExist = tarInfo.pkNumber !== "empty";
+		const tColor = tarInfo.color;
+		const tNumber = this.pkConvertToNumber(tarInfo.number);
+		
+
+		const sourceAreaIndex = transferData.sourceAreaIndex;
+		const sourceInfoList = transferData.moveInfoList;
+		const isLenOver = sourceInfoList.length !==1;
+		const sColor = sourceInfoList[0].color;
+		const sNumber = this.pkConvertToNumber(sourceInfoList[0].number);
+
+		let ret = "";
+		let colorPair = false;
+		let numberPair = false;
+		switch(this.areaType){
+			case "freeCell"://接龍區
+				const isFromCompilation = parseInt(sourceAreaIndex /20) === 1; 
+				colorPair = tColor !== sColor;
+				numberPair = tNumber-1 === sNumber;
+				ret =  colorPair && numberPair && !isFromCompilation ? "accept": "reject";
+				break;
+			case "temporary"://暫存區				
+				// !== null || sourceInfo !== undefined;
+				ret =  !cardExist && !isLenOver ? "accept": "reject";
+				break;
+			case "compilation"://歸類區
+				colorPair = tColor === sColor || !cardExist;
+				const isFirst = sNumber === 1 && !cardExist;
+				numberPair = tNumber+1 === sNumber || isFirst;
+				ret =  colorPair && numberPair && !isLenOver ? "accept": "reject";
+				break;
+
+		}	
+
+		return ret;	
+	}
+}
+//卡套
 function PokerHolder(props){
 	const { children, index, spacing, Draggable,state} = props;
 	const style={
 		top: index * spacing
 	};
-	const isDragging = state !== "refresh"
+	const isDragging = state !== "refresh" && state !== "empty";
+	const isEmpty = state === "empty";
 	const isDragArea = props.onPokerDragEnter !== null;
-	const pkClassName = `pokerHolder ${isDragging?"dragging":""}`		
+	const pkClassName = `${isEmpty?"empty":""} pokerHolder ${isDragging?"dragging":""} `		
 
 
 	return(
-		<div className={pkClassName} draggable={true} style={style}
+		<div className={pkClassName} draggable={Draggable} style={style}
 			onDragStart={(e)=>{props.onPokerDragStart(e , index)}}
 			onDrag={(e)=>{props.onPokerDrag(e, index)}}
-			onDragEnd={(e)=>{props.onPokerDragEnd(e, index)}}
+			onDragEnd={
+				(e)=>{
+					props.onPokerDragEnd(e, index)
+				}
+			}
 
 			onDragEnter={
 				(e)=>{
