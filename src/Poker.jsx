@@ -595,6 +595,7 @@ class SetPokersArea extends React.Component{
 	getDropResultCode(tarInfo , transferData){
 		const cardExist = tarInfo.pkNumber !== "empty";
 		const tColor = tarInfo.color;
+		const tSuit = tarInfo.suit;
 		const tNumber = this.pkConvertToNumber(tarInfo.number);
 		
 
@@ -602,24 +603,26 @@ class SetPokersArea extends React.Component{
 		const sourceInfoList = transferData.moveInfoList;
 		const isLenOver = sourceInfoList.length !==1;
 		const sColor = sourceInfoList[0].color;
+		const sSuit = sourceInfoList[0].suit;
 		const sNumber = this.pkConvertToNumber(sourceInfoList[0].number);
 
+		const isFromCompilation = parseInt(sourceAreaIndex /20) === 1; 
 		let ret = "";
 		let colorPair = false;
 		let numberPair = false;
 		switch(this.areaType){
 			case "freeCell"://接龍區
-				const isFromCompilation = parseInt(sourceAreaIndex /20) === 1; 
+				
 				colorPair = tColor !== sColor;
 				numberPair = tNumber-1 === sNumber;
 				ret =  colorPair && numberPair && !isFromCompilation ? "accept": "reject";
 				break;
 			case "temporary"://暫存區				
 				// !== null || sourceInfo !== undefined;
-				ret =  !cardExist && !isLenOver ? "accept": "reject";
+				ret =  !cardExist && !isLenOver && !isFromCompilation? "accept": "reject";
 				break;
 			case "compilation"://歸類區
-				colorPair = tColor === sColor || !cardExist;
+				colorPair = tSuit === sSuit || !cardExist;
 				const isFirst = sNumber === 1 && !cardExist;
 				numberPair = tNumber+1 === sNumber || isFirst;
 				ret =  colorPair && numberPair && !isLenOver ? "accept": "reject";
