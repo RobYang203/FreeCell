@@ -10,11 +10,19 @@ export default class Board extends React.Component{
 	
 		this.sfPokerList = this.shufflePoker();
 		this.transferData = {
-			sourceAreaIndex:null,
-			targetAreaIndex:null,
+			sourceArea:{
+				index:null,
+				rect:null
+			},
+			targetArea:{
+				index:null,
+				rect:null
+			},
 			moveInfoList:[],
 			state:""
 		};
+		this.recordList = [];
+
 		this.createPokerList = this.createPokerList.bind(this);
 		this.getRandom = this.getRandom.bind(this);
 		this.shufflePoker = this.shufflePoker.bind(this);
@@ -26,6 +34,7 @@ export default class Board extends React.Component{
 
 		this.setMovingDragImage = this.setMovingDragImage.bind(this);
 		this.transferCenter = this.transferCenter.bind(this);
+		this.rollBack = this.rollBack.bind(this);
 		console.log(this.sfPokerList);
 	}
 	render(){
@@ -43,7 +52,12 @@ export default class Board extends React.Component{
 					</div>
 				</div>
 				<div className="bottomArea">
-					{setPokerAreaList}
+					<div className="freeCellArea">
+						{setPokerAreaList}
+					</div>
+					<div className="toolArea">
+						<div className="icon icon-cw" onClick={(e)=>{this.rollBack(e)}}></div>
+					</div>
 				</div>
 				
 				<SetPokersArea areaIndex={-1} areaType="freeCell" poker={this.state.showDragPkNumberList} isShowArea={true}/>
@@ -178,22 +192,25 @@ export default class Board extends React.Component{
 			showDragPkNumberList:tmp
 		});
 	}
-	transferCenter(areaIndex , requestCode, values){
+	transferCenter(area , requestCode, values){
 		switch(requestCode){
 			case "waitTrans":
-				this.transferData["sourceAreaIndex"]  = areaIndex;
+				this.transferData["sourceArea"]  = area;
 				this.transferData["moveInfoList"] = values;
 				this.transferData["state"] = requestCode;
 				//this.state.pokers[areaIndex].state= "dragging";
 				this.setMovingDragImage(values);
 				break;
 			case "arrival":
-				this.transferData["targetAreaIndex"]  = areaIndex;
+				this.transferData["targetArea"]  = area;
 				return this.transferData;
 				break;
 			case "reject":
+				this.transferData["state"] = requestCode;
+				break;
 			case "accept":
 				this.transferData["state"] = requestCode;
+				recordList.push(this.transferData);
 				break;
 			case "finish":
 				//this.state.pokers[areaIndex].state= null;
@@ -206,7 +223,15 @@ export default class Board extends React.Component{
 		}
 
 	}
+	rollBack(e){
+		if(this.recordList.length === 0)
+			return;
+		//取最後一筆
+		const rbRecord = this.recordList[this.recordList.length];
 
+		//rbRecord
+
+	}
 
 }
 
@@ -273,8 +298,11 @@ class SetPokersArea extends React.Component{
 			
 			//areaState = "、normal";
 			this.pokerList = [];
-			const emptyPoker = this.createEmptyPokerCard();
-			this.pokerList.push(emptyPoker);
+			if(!this.props.isShowArea){
+				const emptyPoker = this.createEmptyPokerCard();
+				this.pokerList.push(emptyPoker);
+			}
+			
 			
 			const pkLen = this.pkInfoList.length;
 			let areaH = 222;
@@ -351,7 +379,12 @@ class SetPokersArea extends React.Component{
 				interlockIndex:null
 			};
 		const targetInfo = this.pkInfoList[index] === undefined || this.pkInfoList[index] === null? emptyInfo: this.pkInfoList[index];
-		const transferData = this.props.transferCenter(this.areaIndex, "arrival");
+		const rect = e.target.getBoundingClientRect();
+		const area = {
+			index :this.areaIndex,
+			rect: rect
+		};
+		const transferData = this.props.transferCenter(area, "arrival");
 		
 		
 		
@@ -365,8 +398,7 @@ class SetPokersArea extends React.Component{
 			});
 			this.setState({areaState:"refresh"});
 		}
-			
-		this.props.transferCenter(this.areaIndex, returnCode);
+		this.props.transferCenter(area, returnCode);
 
 
 		if(this.props.onPokerDrop === null || this.props.onPokerDrop === undefined)
@@ -381,7 +413,7 @@ class SetPokersArea extends React.Component{
 
 		const dragPoker = this.pkInfoList[index];		
 		dragPoker.state = "dragging";
-
+		
 		const moveInfoList = [dragPoker];
 		if(dragPoker.interlockIndex !== -1){
 			let iLPKInfo = this.pkInfoList[dragPoker.interlockIndex];
@@ -393,9 +425,15 @@ class SetPokersArea extends React.Component{
 				iLPKInfo = this.pkInfoList[nextInterlockIndex];
 			}while(iLPKInfo !== null && iLPKInfo !== undefined);						
 		}
-		console.log(moveInfoList);
+
+		const rect = e.target.getBoundingClientRect();
+		const area = {
+			index :this.areaIndex,
+			rect: rect
+		};
 		this.setState({areaState:"dragging"});
-		this.props.transferCenter(this.areaIndex, "waitTrans",moveInfoList);
+		this.props.transferCenter(area, "waitTrans",moveInfoList);
+
 		const x = e.nativeEvent.layerX;
 		const y = e.nativeEvent.layerY;
 		e.dataTransfer.setDragImage(document.querySelector(".setPokersArea.showDragImage"), x, y);		

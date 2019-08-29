@@ -27,7 +27,20 @@
 .bottomArea{
   margin: 34px 0 0 31px;
 }
-
+.freeCellArea{
+  display: inline-block; 
+}
+.toolArea{
+  display: inline-block; 
+  vertical-align: top;
+}
+.toolArea .icon{
+  font-size: 15em;
+  color:white;
+}
+.icon.icon-cw:hover{
+   transform: rotate(-45deg);
+}
 .dragging {
     opacity: 0.0;   
     border-radius:10px;
@@ -76,12 +89,23 @@
 
 .empty{
   display: inline-block;
-  width:  162px;
+  width: 162px;
   height: 222px;
   border-radius: 20px;
-  border:5px dashed #c3c3c3;
+  border: 2px solid #291c16;
   padding: 5px;
-  left:0px;
+  left: 0px;
+  background: #423027;
+}
+.empty::after{
+  content: ">>";
+  font-size: 11em;
+  transform: rotate(-90deg) scale(0.5,1.8);
+  position: absolute;
+  top: 10px;
+  left: -16px;
+  filter: blur(2px);
+  color: #543a2d;
 }
 
 .front {
