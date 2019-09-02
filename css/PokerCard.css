@@ -1,4 +1,6 @@
-
+.rollBack{
+  opacity: 0;
+}
 .transformContent{
   transform: scale(0.8,0.8);
   width: 150%;
@@ -65,6 +67,7 @@
   background-color: rgba(0,191,165,.04);
   user-select: none;
   left:5px;
+  transition: 2s .3s linear;
 }
 .pokerCard{
   position: relative;

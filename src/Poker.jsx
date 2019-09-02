@@ -160,7 +160,7 @@ export default class Board extends React.Component{
 	}
 
 	getRandom(max){
-    	return Math.floor(Math.random()*max)+1;
+    	return Math.floor(Math.random()*max);
 	}
 	// 發牌回應 ，對每區每次發一張，發到牌沒有
 	onLicensing(){
@@ -169,7 +169,7 @@ export default class Board extends React.Component{
 				const pkIndex = i % 8;
 				if(pkNumberList[pkIndex] === null){
 					pkNumberList[pkIndex] = {
-						state:null,
+						notify:null,
 						pkNumberList:[]
 					};
 				}
@@ -185,7 +185,7 @@ export default class Board extends React.Component{
 			list.push(pkInfo.pkNumber);
 		});
 		const tmp = {
-			state:"showArea",
+			notify:"showArea",
 			pkNumberList:list
 		}
 		this.setState({
@@ -210,7 +210,7 @@ export default class Board extends React.Component{
 				break;
 			case "accept":
 				this.transferData["state"] = requestCode;
-				recordList.push(this.transferData);
+				this.recordList.push(this.transferData);
 				break;
 			case "finish":
 				//this.state.pokers[areaIndex].state= null;
@@ -220,6 +220,9 @@ export default class Board extends React.Component{
 				this.transferData["movingList"] = [];
 				this.transferData["state"] = requestCode;
 				break;
+			case "rollBack":
+			  	return this.recordList[this.recordList.length];
+				break;
 		}
 
 	}
@@ -228,7 +231,10 @@ export default class Board extends React.Component{
 			return;
 		//取最後一筆
 		const rbRecord = this.recordList[this.recordList.length];
-
+		const targetIndex = rbRecord["targetArea"].index;
+		const pokers = this.state.pokers;
+		pokers[targetIndex].state = "deleteCard";
+		this.setState({pokers:pokers});
 		//rbRecord
 
 	}
@@ -285,10 +291,22 @@ class SetPokersArea extends React.Component{
 		if(nextProps.poker === null)
 			return
 		let areaState = nextState.areaState;//nextProps.poker.state === null? nextState.areaState : nextProps.poker.state;
-
 		if(areaState === "licensing" || this.props.isShowArea){
 			this.pkNumberList = nextProps.poker.pkNumberList;			
 			areaState = "refresh";
+		}
+
+		const parentNotify =  nextProps.poker.notify;
+		if(parentNotify !== null){
+			const rbRecord = this.props.transferCenter(area , "rollBack", values);
+			switch(parentNotify){
+				case "deleteCard":
+					//rbRecord[]
+					break;
+				case "insertCard":
+					break;
+
+			}
 		}
 		if(areaState === "refresh" || this.props.isShowArea){
 			this.pkInfoList = this.setPkInfo(this.pkNumberList);
