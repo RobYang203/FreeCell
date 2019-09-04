@@ -7,7 +7,7 @@ export default class Board extends React.Component{
 			pokers:[null,null,null,null,null,null,null,null],
 			showDragPkNumberList:null
 		}; 
-	
+		this.isRollBack = false;
 		this.sfPokerList = this.shufflePoker();
 		this.transferData = {
 			sourceArea:{
@@ -22,7 +22,7 @@ export default class Board extends React.Component{
 			state:""
 		};
 		this.recordList = [];
-
+		
 		this.createPokerList = this.createPokerList.bind(this);
 		this.getRandom = this.getRandom.bind(this);
 		this.shufflePoker = this.shufflePoker.bind(this);
@@ -102,12 +102,12 @@ export default class Board extends React.Component{
 		const ret = []; 
 		for(let i =11; i <= 14 ; i++){
 			const tmpPoker ={
-				state:null,
+				notify:null,
 				pkNumberList:[]
 			}
 			const tmp = <SetPokersArea 
 							areaIndex={i} 
-							poker={tmpPoker}
+							poker={this.state.pokers[i]}
 							transferCenter={this.transferCenter}
 							areaType="temporary"
 						/>;		
@@ -120,12 +120,12 @@ export default class Board extends React.Component{
 		const ret = []; 
 		for(let i =21; i <= 24 ; i++){
 			const tmpPoker ={
-				state:null,
+				notify:null,
 				pkNumberList:[]
 			}
 			const tmp = <SetPokersArea 
 							areaIndex={i} 
-							poker={tmpPoker}
+							poker={this.state.pokers[i]}
 							transferCenter={this.transferCenter}
 							areaType="compilation"
 						/>;		
@@ -174,7 +174,21 @@ export default class Board extends React.Component{
 					};
 				}
 				pkNumberList[pkIndex]["pkNumberList"].push(pkNumber);
-		})
+		});
+		for(let i =11; i <= 14 ; i++){
+			const tmpPoker ={
+				notify:null,
+				pkNumberList:[]
+			}
+			pkNumberList[i] = tmpPoker;
+		}
+		for(let i =21; i <= 24 ; i++){
+			const tmpPoker ={
+				notify:null,
+				pkNumberList:[]
+			}
+			pkNumberList[i] = tmpPoker;
+		}
 		console.log(pkNumberList);
 		this.setState({pokers:pkNumberList});
 		
@@ -185,7 +199,7 @@ export default class Board extends React.Component{
 			list.push(pkInfo.pkNumber);
 		});
 		const tmp = {
-			notify:"showArea",
+			notify:null,
 			pkNumberList:list
 		}
 		this.setState({
@@ -193,6 +207,8 @@ export default class Board extends React.Component{
 		});
 	}
 	transferCenter(area , requestCode, values){
+		const pokers = this.state.pokers;
+		const recordInfo = this.recordList[this.recordList.length-1];		
 		switch(requestCode){
 			case "waitTrans":
 				this.transferData["sourceArea"]  = area;
@@ -210,30 +226,45 @@ export default class Board extends React.Component{
 				break;
 			case "accept":
 				this.transferData["state"] = requestCode;
-				this.recordList.push(this.transferData);
+				this.recordList.push(Object.assign({},this.transferData));
 				break;
 			case "finish":
 				//this.state.pokers[areaIndex].state= null;
 				return this.transferData;
 				break;
 			case "clear":
-				this.transferData["movingList"] = [];
+				this.transferData["moveInfoList"] = [];
 				this.transferData["state"] = requestCode;
 				break;
 			case "rollBack":
-			  	return this.recordList[this.recordList.length];
+			  	return this.recordList[this.recordList.length-1];
+				break;
+			case "rollBackNext":
+				const rbSourceIndex = recordInfo["sourceArea"].index;
+				pokers[rbSourceIndex].notify ="insertCard";
+				pokers[area.index].notify =null;					
+			  	this.setState({pokers:pokers});
+				break;
+			case "rollBackDone":
+				pokers[area.index].notify =null;
+				const recordLen = this.recordList.length -1;
+				this.recordList.splice(recordLen,1);
+				this.setState({pokers:pokers});
+				this.isRollBack = false;
 				break;
 		}
 
 	}
 	rollBack(e){
-		if(this.recordList.length === 0)
+		if(this.recordList.length === 0 || this.isRollBack)
 			return;
 		//取最後一筆
-		const rbRecord = this.recordList[this.recordList.length];
+		this.isRollBack = true;
+		const rbRecord = this.recordList[this.recordList.length-1];
 		const targetIndex = rbRecord["targetArea"].index;
+		const sourceIndex = rbRecord["sourceArea"].index;
 		const pokers = this.state.pokers;
-		pokers[targetIndex].state = "deleteCard";
+		pokers[targetIndex].notify = "deleteCard";
 		this.setState({pokers:pokers});
 		//rbRecord
 
@@ -255,7 +286,7 @@ class SetPokersArea extends React.Component{
 			const pkInfo={
 				pkNumber:pkNumber,
 				number:0,
-				state:"refresh",
+				state:"refresh",//refresh 、 dragging 、 movinglock 、 deleteCard 、inertCard
 				suit:null,
 				color:null,
 				interlockIndex:null
@@ -266,7 +297,7 @@ class SetPokersArea extends React.Component{
 		this.areaIndex = this.props.areaIndex;
 		this.pkInfoList={};
 		this.pkNumberList=[];
-		
+		this.recordList = null;
 
 		const isShowArea = this.props.isShowArea;
 		this.showAreaClass = `setPokersArea ${isShowArea?"showDragImage":""}`;
@@ -286,6 +317,7 @@ class SetPokersArea extends React.Component{
 		this.createPokerCard = this.createPokerCard.bind(this);
 		this.setPkInfo  =this.setPkInfo.bind(this);
 		this.getDropResultCode = this.getDropResultCode.bind(this);
+		this.rollBackCallBack = this.rollBackCallBack.bind(this);
 	}
 	componentWillUpdate(nextProps, nextState){
 		if(nextProps.poker === null)
@@ -296,25 +328,42 @@ class SetPokersArea extends React.Component{
 			areaState = "refresh";
 		}
 
-		const parentNotify =  nextProps.poker.notify;
-		if(parentNotify !== null){
-			const rbRecord = this.props.transferCenter(area , "rollBack", values);
-			switch(parentNotify){
-				case "deleteCard":
-					//rbRecord[]
-					break;
-				case "insertCard":
-					break;
-
-			}
-		}
 		if(areaState === "refresh" || this.props.isShowArea){
 			this.pkInfoList = this.setPkInfo(this.pkNumberList);
 		}
 
+		const parentNotify =  nextProps.poker.notify;
+		if(parentNotify !== null){
+			areaState = "refresh";
+			const area = {
+				index:this.areaIndex,
+				react:null
+			};
+			const transferData = this.props.transferCenter(area , "rollBack", null);
+			this.recordList =Object.assign([],transferData["moveInfoList"]) ;
+			switch(parentNotify){
+				case "deleteCard":
+					this.pkInfoList.map((pkInfo ,i)=>{
+						this.recordList.map((rbRecord)=>{
+							if(rbRecord.pkNumber === pkInfo.pkNumber){
+								pkInfo.state = parentNotify;
+							}
+
+						});
+					});
+					break;
+				case "insertCard":
+					this.recordList.map((rbRecord)=>{		
+						rbRecord.state = parentNotify;					
+						this.pkInfoList.push(rbRecord);
+					});
+					break;
+			}
+		}
+
 		if(areaState === "refresh" || areaState === "dragging" || this.props.isShowArea){
 			
-			//areaState = "、normal";
+			//areaState = "normal";
 			this.pokerList = [];
 			if(!this.props.isShowArea){
 				const emptyPoker = this.createEmptyPokerCard();
@@ -357,6 +406,11 @@ class SetPokersArea extends React.Component{
 	componentDidUpdate(prevProps, prevState, snapshot){
 		if(this.state.areaState === "licensing" || this.state.areaState  === "refresh")
 			this.setState({areaState:"normal"});
+		if(this.props.notify === "deleteCard" || this.props.notify === "insertCard"){
+
+			this.props.transferCenter(area , "rollBack", values);
+		}
+			
 	}
 
 	onPokerDragEnter(e, index){
@@ -512,7 +566,7 @@ class SetPokersArea extends React.Component{
 				onPokerDragLeave={onPokerDragLeave}
 				onPokerDrop={onPokerDrop}
 				>
-				<Poker number={number} suit={suit} />
+				<Poker number={number} state={state} suit={suit} rollBackCallBack={this.rollBackCallBack}/>
 			</PokerHolder>			
 		return poker;
 	}
@@ -688,6 +742,44 @@ class SetPokersArea extends React.Component{
 
 		return ret;	
 	}
+
+	rollBackCallBack(type , number , suit){
+
+		const index = this.recordList.findIndex((record)=>{
+			return record["number"] === number && record["suit"] === suit;
+		});
+		if(index === -1)
+			return;
+		const recordPkNumber = this.recordList[index]["pkNumber"];
+		switch(type){
+			case "deleteCard":
+				const delIndex = this.pkNumberList.findIndex((pkNumber)=>{
+					return recordPkNumber ===pkNumber;
+				});
+				this.pkNumberList.splice(delIndex , 1);
+				break;
+			case "insertCard":
+				this.pkNumberList.push(recordPkNumber);
+				break;
+		}
+		this.recordList.splice(index, 1);
+		if(this.recordList.length > 0)
+			return;
+		const area = {
+			index:this.areaIndex,
+			react:null
+		}
+		switch(type){
+			case "deleteCard":
+				this.props.transferCenter(area ,"rollBackNext",null);
+				break;
+			case "insertCard":
+				this.props.transferCenter(area ,"rollBackDone",null);
+				break;
+		}
+		this.state.areaState = "refresh";
+
+	}
 }
 //卡套
 function PokerHolder(props){
@@ -697,8 +789,10 @@ function PokerHolder(props){
 	};
 	const isDragging = state !== "refresh" && state !== "empty";
 	const isEmpty = state === "empty";
+	const isDelete = state === "deleteCard";
+	const isInsert = state === "insertCard";
 	const isDragArea = props.onPokerDragEnter !== null;
-	const pkClassName = `${isEmpty?"empty":""} pokerHolder ${isDragging?"dragging":""} `		
+	const pkClassName = `${isEmpty?"empty":""} pokerHolder`		
 
 
 	return(
@@ -747,7 +841,10 @@ class Poker extends React.Component{
 	constructor(props){
 		super(props);
 		this.getSuitClass = this.getSuitClass.bind(this);
+		this.setOpacity = this.setOpacity.bind(this);
+		const pokerState  = this.props.state === "insertCard"? 0: 1;
 
+		this.state = {opacity:pokerState};
 	}
 	getSuitClass(suit){
 		let ret = "card ";
@@ -767,13 +864,42 @@ class Poker extends React.Component{
 		}
 		return ret;
 	}
+	setOpacity(number,suit,state){
+		const pokerState = this.props.state;
 
+		if(pokerState === "deleteCard"){
+			if(this.state.opacity <= 0){
+				this.props.rollBackCallBack(pokerState,number,suit);
+				return;
+			}
+					
+			setTimeout(()=>{
+				const nowOpacity = this.state.opacity - 0.2;
+				this.setState({opacity:nowOpacity});
+			},100);
+
+		} else if(pokerState === "insertCard"){
+
+			if(this.state.opacity >= 1){
+				this.props.rollBackCallBack(pokerState,number,suit);
+				return;
+			}					
+			setTimeout(()=>{
+				const nowOpacity = this.state.opacity + 0.2;
+				this.setState({opacity:nowOpacity});
+			},100);
+		}
+	}
 
 	render(){
-		const {number,suit} = this.props;
+		const {number,suit,state} = this.props;
 		const suitClass = this.getSuitClass(suit);
+		this.setOpacity(number,suit,state);
+		const pokerStyle = {
+			opacity:this.state.opacity
+		};
 		return(
-			<div className="pokerCard" >
+			<div className="pokerCard" style={pokerStyle}>
 				<div className={suitClass}>
 				  <div className="front">
 				    <div className="spotTop">{number}</div>
