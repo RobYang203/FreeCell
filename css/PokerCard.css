@@ -39,8 +39,15 @@
   color:white;
 }
 .icon.icon-cw:hover{
-   transform: rotate(-45deg);
-  transition: .1s .3s linear;
+  transform: rotate(15deg);
+  transition: transform .1s .3s linear;
+}
+.icon.icon-cw:active{
+  color:#c3c3c3;
+}
+.icon.icon-cw{
+  transform: rotate(0deg);
+  transition: transform .1s .3s linear;
 }
 .dragging {
     opacity: 0.0;   
@@ -48,7 +55,7 @@
     border:none;
 }
 .hover {
-    background-color: rgba(0,191,165,.04);
+    box-shadow: 0px 0px 5px 5px #c3c3c3;
 }
 
 .setPokersArea.showDragImage{
@@ -106,6 +113,7 @@
   left: 0px;
   background: #423027;
 }
+
 .empty::after{
   content: ">>";
   font-size: 11em;
